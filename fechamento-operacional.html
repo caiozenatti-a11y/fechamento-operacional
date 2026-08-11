@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fechamento Operacional – Mercado Livre</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --yellow: #FFE600;
+      --yellow-dark: #E6CF00;
+      --black: #1A1A1A;
+      --white: #FFFFFF;
+      --gray: #F5F5F5;
+      --gray2: #E8E8E8;
+      --gray3: #999;
+      --blue: #3483FA;
+      --green: #00A650;
+      --red: #F23D4F;
+      --sans: 'Inter', sans-serif;
+    }
+    body { font-family: var(--sans); background: #ECECEC; color: var(--black); min-height: 100vh; }
+
+    /* LAYOUT */
+    .app { display: flex; gap: 0; min-height: 100vh; }
+
+    /* SIDEBAR FORM */
+    .sidebar {
+      width: 380px; min-width: 340px; background: var(--white);
+      border-right: 1px solid var(--gray2); padding: 28px 24px;
+      overflow-y: auto; max-height: 100vh; position: sticky; top: 0;
+    }
+    .sidebar h2 { font-size: 15px; font-weight: 700; color: var(--black); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--yellow); }
+
+    .form-section { margin-bottom: 20px; }
+    .form-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray3); margin-bottom: 10px; }
+
+    .field { margin-bottom: 10px; }
+    .field label { font-size: 12px; font-weight: 600; color: var(--black); display: block; margin-bottom: 4px; }
+    .field input, .field textarea, .field select {
+      width: 100%; border: 1.5px solid var(--gray2); border-radius: 6px;
+      font-family: var(--sans); font-size: 13px; color: var(--black);
+      padding: 7px 10px; outline: none; background: var(--gray);
+      transition: border-color 0.15s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--blue); background: var(--white); }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .btn-gerar {
+      width: 100%; background: var(--yellow); color: var(--black);
+      font-family: var(--sans); font-size: 14px; font-weight: 700;
+      border: none; border-radius: 8px; padding: 12px;
+      cursor: pointer; transition: background 0.15s; margin-top: 8px;
+    }
+    .btn-gerar:hover { background: var(--yellow-dark); }
+
+    .btn-print {
+      width: 100%; background: var(--black); color: var(--white);
+      font-family: var(--sans); font-size: 13px; font-weight: 600;
+      border: none; border-radius: 8px; padding: 10px;
+      cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
+    }
+    .btn-print:hover { opacity: 0.85; }
+    .btn-carregar {
+      width: 100%; background: #3483FA; color: #fff;
+      font-family: var(--sans); font-size: 12px; font-weight: 600;
+      border: none; border-radius: 6px; padding: 8px;
+      cursor: pointer; margin-bottom: 8px; transition: opacity 0.15s;
+    }
+    .btn-carregar:hover { opacity: 0.85; }
+
+    /* MINI TABLE */
+    .mini-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    .mini-table th { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--gray3); padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--gray2); }
+    .mini-table td { padding: 4px 6px; }
+    .mini-table td input { border: 1px solid var(--gray2); border-radius: 4px; font-family: var(--sans); font-size: 12px; padding: 4px 6px; width: 100%; background: var(--gray); outline: none; }
+    .mini-table td input:focus { border-color: var(--blue); background: var(--white); }
+
+    /* PREVIEW AREA */
+    .preview-area { flex: 1; padding: 32px; display: flex; flex-direction: column; align-items: center; }
+
+    /* DOCUMENT */
+    .doc {
+      background: var(--yellow); width: 100%; max-width: 860px;
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      font-family: var(--sans);
+    }
+
+    /* DOC HEADER */
+    .doc-header {
+      background: var(--yellow); padding: 18px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid rgba(0,0,0,0.1);
+    }
+    .doc-logo { display: flex; align-items: center; gap: 10px; }
+    .doc-logo-icon {
+      width: 48px; height: 48px; background: var(--black); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .doc-logo-icon svg { width: 28px; height: 28px; fill: var(--yellow); }
+    .doc-logo-text { font-size: 13px; font-weight: 700; color: var(--black); line-height: 1.2; }
+    .doc-title { font-size: 22px; font-weight: 800; color: var(--black); text-align: center; flex: 1; }
+    .doc-date { font-size: 13px; font-weight: 700; color: var(--black); background: var(--white); border-radius: 6px; padding: 6px 14px; white-space: nowrap; }
+
+    /* KPI ROW */
+    .kpi-row { background: var(--white); padding: 16px 24px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 2px solid var(--yellow); }
+    .kpi-box { flex: 1; min-width: 100px; background: var(--gray); border-radius: 8px; padding: 12px 14px; border: 1.5px solid var(--gray2); }
+    .kpi-box .kpi-name { font-size: 11px; font-weight: 700; color: var(--gray3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi-box .kpi-val { font-size: 22px; font-weight: 800; color: var(--black); margin-top: 2px; line-height: 1; }
+
+    /* DOC BODY */
+    .doc-body { background: var(--white); padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+    /* JUSTIFICATIVA */
+    .just-block { background: var(--gray); border-radius: 8px; padding: 14px; grid-column: span 1; }
+    .just-tag { display: inline-block; background: var(--yellow); color: var(--black); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+    .just-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .just-text { font-size: 12px; line-height: 1.6; color: #333; }
+
+    /* TABLES */
+    .table-block { grid-column: span 1; }
+    .table-block h3 { font-size: 12px; font-weight: 700; color: var(--black); margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--yellow); }
+    .doc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .doc-table th { font-size: 11px; font-weight: 600; color: var(--gray3); padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--gray2); }
+    .doc-table td { padding: 5px 8px; border-bottom: 1px solid var(--gray); }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table .total-row td { font-weight: 700; border-top: 1.5px solid var(--gray2); padding-top: 6px; }
+    .total-red { color: var(--red); }
+    .total-green { color: var(--green); }
+
+    @media print {
+      .sidebar, .preview-area > *:not(.doc) { display: none !important; }
+      body { background: white; }
+      .preview-area { padding: 0; }
+      .doc { box-shadow: none; border-radius: 0; max-width: 100%; }
+    }
+
+    @media (max-width: 800px) {
+      .app { flex-direction: column; }
+      .sidebar { width: 100%; max-height: none; position: static; }
+      .doc-body { grid-template-columns: 1fr 1fr; }
+      .doc-title { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>⚙️ Preencher Fechamento</h2>
+
+    <div class="form-section">
+      <div class="form-section-title">Data</div>
+      <div class="field">
+        <label>Data do Fechamento</label>
+        <input type="date" id="f-data"/>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Indicadores</div>
+      <div class="field-row">
+        <div class="field"><label>DOT (%)</label><input type="text" id="f-dot" placeholder="99,49%"/></div>
+        <div class="field"><label>OOT (%)</label><input type="text" id="f-oot" placeholder="99,49%"/></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>SPP</label><input type="text" id="f-spp" placeholder="92,80"/></div>
+        <div class="field"><label>V4</label><input type="text" id="f-v4" placeholder="0"/></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>ABS (%)</label><input type="text" id="f-abs" placeholder="12,84%"/></div>
+        <div class="field"><label>ABS (Nº)</label><input type="text" id="f-abs-n" placeholder="71"/></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Justificativa</div>
+      <div class="field">
+        <textarea id="f-just" placeholder="Descreva a justificativa do fechamento operacional..."></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">ABS por Setor</div>
+      <button class="btn-carregar" onclick="carregarABS()">&#x27F3; Carregar da Planilha</button>
+      <div id="abs-status" style="font-size:11px;color:#999;margin:4px 0;"></div>
+      <table class="mini-table">
+        <thead><tr><th>Setor</th><th>Qtd</th></tr></thead>
+        <tbody id="abs-tbody">
+          <tr><td><input value="Volumoso" id="abs-s1"/></td><td><input type="number" id="abs-q1" placeholder="0"/></td></tr>
+          <tr><td><input value="Esteira" id="abs-s2"/></td><td><input type="number" id="abs-q2" placeholder="0"/></td></tr>
+          <tr><td><input value="Inhub" id="abs-s3"/></td><td><input type="number" id="abs-q3" placeholder="0"/></td></tr>
+          <tr><td><input value="Reversa" id="abs-s4"/></td><td><input type="number" id="abs-q4" placeholder="0"/></td></tr>
+          <tr><td><input value="Expedição" id="abs-s5"/></td><td><input type="number" id="abs-q5" placeholder="0"/></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Backlog Expedição</div>
+      <table class="mini-table">
+        <thead><tr><th>Canalização</th><th>Posição</th><th>Pacotes</th></tr></thead>
+        <tbody id="backlog-exp-rows">
+          <tr>
+            <td><input id="be-c1" placeholder="—"/></td>
+            <td><input id="be-p1" placeholder="—"/></td>
+            <td><input type="number" id="be-q1" placeholder="0"/></td>
+          </tr>
+          <tr>
+            <td><input id="be-c2" placeholder="—"/></td>
+            <td><input id="be-p2" placeholder="—"/></td>
+            <td><input type="number" id="be-q2" placeholder="0"/></td>
+          </tr>
+          <tr>
+            <td><input id="be-c3" placeholder="—"/></td>
+            <td><input id="be-p3" placeholder="—"/></td>
+            <td><input type="number" id="be-q3" placeholder="0"/></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">Backlog Montagem</div>
+      <table class="mini-table">
+        <thead><tr><th>Pacotes</th><th>Setor</th></tr></thead>
+        <tbody>
+          <tr><td><input type="number" id="bm-q1" placeholder="0"/></td><td><input id="bm-s1" value="Esteira 1"/></td></tr>
+          <tr><td><input type="number" id="bm-q2" placeholder="0"/></td><td><input id="bm-s2" value="Esteira 2"/></td></tr>
+          <tr><td><input type="number" id="bm-q3" placeholder="0"/></td><td><input id="bm-s3" value="Esteira 3"/></td></tr>
+          <tr><td><input type="number" id="bm-q4" placeholder="0"/></td><td><input id="bm-s4" value="Volumoso 1"/></td></tr>
+          <tr><td><input type="number" id="bm-q5" placeholder="0"/></td><td><input id="bm-s5" value="Volumoso 2"/></td></tr>
+          <tr><td><input type="number" id="bm-q6" placeholder="0"/></td><td><input id="bm-s6" value="Volumoso 3"/></td></tr>
+          <tr><td><input type="number" id="bm-q7" placeholder="0"/></td><td><input id="bm-s7" value="Azul"/></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <button class="btn-gerar" onclick="gerar()">▶ Gerar Fechamento</button>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-area">
+    <div class="doc" id="doc">
+
+      <div class="doc-header">
+        <div class="doc-logo">
+          <div class="doc-logo-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+            </svg>
+          </div>
+          <div class="doc-logo-text">mercado<br>livre</div>
+        </div>
+        <div class="doc-title">Fechamento Operacional</div>
+        <div class="doc-date" id="d-data">Data: —</div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-box"><div class="kpi-name">DOT</div><div class="kpi-val" id="d-dot">—</div></div>
+        <div class="kpi-box"><div class="kpi-name">OOT</div><div class="kpi-val" id="d-oot">—</div></div>
+        <div class="kpi-box"><div class="kpi-name">SPP</div><div class="kpi-val" id="d-spp">—</div></div>
+        <div class="kpi-box"><div class="kpi-name">V4</div><div class="kpi-val" id="d-v4">—</div></div>
+        <div class="kpi-box"><div class="kpi-name">ABS %</div><div class="kpi-val" id="d-abs">—</div></div>
+        <div class="kpi-box"><div class="kpi-name">ABS Nº</div><div class="kpi-val" id="d-abs-n">—</div></div>
+      </div>
+
+      <div class="doc-body">
+
+        <!-- JUSTIFICATIVA -->
+        <div class="just-block">
+          <span class="just-tag">Fechamento Operacional</span>
+          <div class="just-title">Justificativa</div>
+          <div class="just-text" id="d-just">—</div>
+        </div>
+
+        <!-- ABS POR SETOR -->
+        <div class="table-block">
+          <h3>ABS por Setor</h3>
+          <table class="doc-table">
+            <thead><tr><th>Setor</th><th>Quantidade</th></tr></thead>
+            <tbody id="d-abs-setor"></tbody>
+          </table>
+        </div>
+
+        <!-- BACKLOG EXPEDIÇÃO -->
+        <div class="table-block">
+          <h3>Backlog Expedição</h3>
+          <table class="doc-table">
+            <thead><tr><th>Canalização</th><th>Posição</th><th>Pacotes</th></tr></thead>
+            <tbody id="d-backlog-exp"></tbody>
+            <tfoot id="d-backlog-exp-total"></tfoot>
+          </table>
+        </div>
+
+        <!-- BACKLOG MONTAGEM -->
+        <div class="table-block">
+          <h3>Backlog Montagem</h3>
+          <table class="doc-table">
+            <thead><tr><th>Pacotes</th><th>Setor</th></tr></thead>
+            <tbody id="d-backlog-mont"></tbody>
+            <tfoot id="d-backlog-mont-total"></tfoot>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function v(id) { return document.getElementById(id)?.value || ''; }
+function s(id, html) { const el = document.getElementById(id); if(el) el.innerHTML = html; }
+function t(id, txt) { const el = document.getElementById(id); if(el) el.textContent = txt; }
+
+function gerar() {
+  // Data
+  const dataRaw = v('f-data');
+  const dataFmt = dataRaw ? new Date(dataRaw + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+  t('d-data', 'Data: ' + dataFmt);
+
+  // KPIs
+  t('d-dot',   v('f-dot')   || '—');
+  t('d-oot',   v('f-oot')   || '—');
+  t('d-spp',   v('f-spp')   || '—');
+  t('d-v4',    v('f-v4')    || '—');
+  t('d-abs',   v('f-abs')   || '—');
+  t('d-abs-n', v('f-abs-n') || '—');
+
+  // Justificativa
+  s('d-just', v('f-just').replace(/\n/g, '<br>') || '—');
+
+  // ABS por setor - dinamico baseado no tbody
+  let absRows = '';
+  const absTbody = document.getElementById('abs-tbody');
+  if (absTbody) {
+    const rows = absTbody.querySelectorAll('tr');
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs.length >= 2) {
+        const setor = inputs[0].value;
+        const qtd = inputs[1].value || '0';
+        if (setor) absRows += `<tr><td>${setor}</td><td>${qtd}</td></tr>`;
+      }
+    });
+  }
+  s('d-abs-setor', absRows || '<tr><td colspan="2" style="color:#999">—</td></tr>');
+
+  // Backlog Expedição
+  let beRows = ''; let beTotal = 0;
+  for(let i=1;i<=3;i++) {
+    const c = v('be-c'+i), p = v('be-p'+i), q = parseInt(v('be-q'+i))||0;
+    if(c||p||q) { beRows += `<tr><td>${c||'—'}</td><td>${p||'—'}</td><td>${q}</td></tr>`; beTotal+=q; }
+  }
+  s('d-backlog-exp', beRows || '<tr><td colspan="3" style="color:#999">—</td></tr>');
+  s('d-backlog-exp-total', `<tr class="total-row"><td colspan="2"><b>Total:</b></td><td class="${beTotal>0?'total-red':'total-green'}"><b>${beTotal} Pacotes</b></td></tr>`);
+
+  // Backlog Montagem
+  let bmRows = ''; let bmTotal = 0;
+  for(let i=1;i<=7;i++) {
+    const q = parseInt(v('bm-q'+i))||0, s2 = v('bm-s'+i);
+    if(s2) { bmRows += `<tr><td>${q}</td><td>${s2}</td></tr>`; bmTotal+=q; }
+  }
+  s('d-backlog-mont', bmRows || '<tr><td colspan="2" style="color:#999">—</td></tr>');
+  s('d-backlog-mont-total', `<tr class="total-row"><td class="${bmTotal>0?'total-red':'total-green'}"><b>${bmTotal} Pacotes</b></td><td></td></tr>`);
+}
+
+const ABS_URL = 'https://script.google.com/a/macros/mercadolivre.com/s/AKfycbxA0A3RIYbFdty1fW-iClEL4p6wULOKbOVoHWn5aupoRwU9fAFu1SQiEF50fAk0hhgn/exec';
+
+function carregarABS() {
+  const status = document.getElementById('abs-status');
+  status.textContent = 'Carregando...';
+  const cbName = 'cbABS_' + Date.now();
+  const url = ABS_URL + '?callback=' + cbName;
+  window[cbName] = function(data) {
+    if (!data || !data.length) { status.textContent = 'Nenhum dado encontrado.'; return; }
+    const tbody = document.getElementById('abs-tbody');
+    tbody.innerHTML = data.map((row, i) =>
+      '<tr><td><input value="' + row.setor + '" id="abs-s' + (i+1) + '"/></td><td><input type="number" value="' + (row.abs||0) + '" id="abs-q' + (i+1) + '"/></td></tr>'
+    ).join('');
+    // Calcula total ABS
+    const totalABS = data.reduce((sum, row) => sum + (parseInt(row.abs) || 0), 0);
+    document.getElementById('f-abs-n').value = totalABS;
+    status.textContent = '✓ ' + data.length + ' setores carregados as ' + new Date().toLocaleTimeString('pt-BR');
+    gerar();
+    delete window[cbName];
+    const s = document.getElementById(cbName);
+    if (s) s.remove();
+  };
+  const script = document.createElement('script');
+  script.id = cbName;
+  script.src = url;
+  script.onerror = function() { status.textContent = 'Erro ao carregar.'; delete window[cbName]; script.remove(); };
+  document.body.appendChild(script);
+}
+
+// Preenche data de hoje automaticamente (editavel)
+const hoje = new Date();
+hoje.setDate(hoje.getDate()); // data de hoje editavel
+document.getElementById('f-data').value = hoje.toISOString().slice(0,10);
+gerar();
+</script>
+</body>
+</html>
